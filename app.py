@@ -1,0 +1,273 @@
+"""
+YouTube Video Downloader
+A Flask app for downloading YouTube videos using yt-dlp
+"""
+
+import os
+import re
+import uuid
+import json
+import threading
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, send_from_directory, Response
+
+try:
+    import yt_dlp
+except ImportError:
+    print("Please install yt-dlp: pip install yt-dlp")
+    raise
+
+app = Flask(__name__)
+
+# Configuration
+DOWNLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "downloads")
+os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+
+# Track download progress
+download_progress = {}
+
+
+def sanitize_filename(filename):
+    """Remove invalid characters from filename"""
+    return re.sub(r'[<>:"/\\|?*]', '_', filename)
+
+
+def get_video_info(url):
+    """Get video information without downloading"""
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': False,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+        # Get available formats
+        formats = []
+        if 'formats' in info:
+            for f in info['formats']:
+                format_info = {
+                    'format_id': f.get('format_id', ''),
+                    'ext': f.get('ext', ''),
+                    'resolution': f.get('resolution', 'audio only'),
+                    'filesize': f.get('filesize') or f.get('filesize_approx'),
+                    'vcodec': f.get('vcodec', 'none'),
+                    'acodec': f.get('acodec', 'none'),
+                    'fps': f.get('fps'),
+                    'tbr': f.get('tbr'),
+                }
+
+                # Only include formats with video or standalone audio
+                if f.get('vcodec') != 'none' or (f.get('acodec') != 'none' and f.get('vcodec') == 'none'):
+                    formats.append(format_info)
+
+        return {
+            'title': info.get('title', 'Unknown'),
+            'thumbnail': info.get('thumbnail', ''),
+            'duration': info.get('duration', 0),
+            'uploader': info.get('uploader', 'Unknown'),
+            'view_count': info.get('view_count', 0),
+            'description': info.get('description', '')[:500] if info.get('description') else '',
+            'formats': formats,
+        }
+
+
+def progress_hook(d, download_id):
+    """Track download progress"""
+    if d['status'] == 'downloading':
+        total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
+        downloaded = d.get('downloaded_bytes', 0)
+
+        if total > 0:
+            percent = (downloaded / total) * 100
+        else:
+            percent = 0
+
+        download_progress[download_id] = {
+            'status': 'downloading',
+            'percent': round(percent, 1),
+            'speed': d.get('speed', 0),
+            'eta': d.get('eta', 0),
+        }
+    elif d['status'] == 'finished':
+        download_progress[download_id] = {
+            'status': 'processing',
+            'percent': 100,
+        }
+
+
+def download_video(url, format_choice, download_id):
+    """Download video in background thread"""
+    try:
+        # Set output template
+        output_template = os.path.join(DOWNLOAD_FOLDER, f'{download_id}_%(title)s.%(ext)s')
+
+        ydl_opts = {
+            'outtmpl': output_template,
+            'progress_hooks': [lambda d: progress_hook(d, download_id)],
+            'quiet': True,
+            'no_warnings': True,
+        }
+
+        # Configure format based on choice
+        if format_choice == 'best':
+            ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+        elif format_choice == 'audio':
+            ydl_opts['format'] = 'bestaudio/best'
+            ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }]
+        elif format_choice == '720p':
+            ydl_opts['format'] = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best'
+        elif format_choice == '480p':
+            ydl_opts['format'] = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best'
+        elif format_choice == '360p':
+            ydl_opts['format'] = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best'
+        else:
+            ydl_opts['format'] = format_choice
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
+
+            # Handle audio extraction filename change
+            if format_choice == 'audio':
+                filename = os.path.splitext(filename)[0] + '.mp3'
+
+            # Get just the filename without path
+            basename = os.path.basename(filename)
+
+            download_progress[download_id] = {
+                'status': 'complete',
+                'percent': 100,
+                'filename': basename,
+            }
+
+    except Exception as e:
+        download_progress[download_id] = {
+            'status': 'error',
+            'error': str(e),
+        }
+
+
+@app.route("/")
+def index():
+    """Serve the main webpage"""
+    return render_template("youtube.html")
+
+
+@app.route("/info", methods=["POST"])
+def video_info():
+    """Get video information"""
+    data = request.get_json()
+    url = data.get("url", "").strip()
+
+    if not url:
+        return jsonify({"error": "Please enter a YouTube URL"}), 400
+
+    # Basic URL validation
+    youtube_pattern = r'(youtube\.com|youtu\.be)'
+    if not re.search(youtube_pattern, url):
+        return jsonify({"error": "Please enter a valid YouTube URL"}), 400
+
+    try:
+        info = get_video_info(url)
+        return jsonify(info)
+    except Exception as e:
+        return jsonify({"error": f"Could not fetch video info: {str(e)}"}), 400
+
+
+@app.route("/download", methods=["POST"])
+def download():
+    """Start video download"""
+    data = request.get_json()
+    url = data.get("url", "").strip()
+    format_choice = data.get("format", "best")
+
+    if not url:
+        return jsonify({"error": "Please enter a YouTube URL"}), 400
+
+    # Generate unique download ID
+    download_id = uuid.uuid4().hex[:12]
+
+    # Initialize progress
+    download_progress[download_id] = {
+        'status': 'starting',
+        'percent': 0,
+    }
+
+    # Start download in background thread
+    thread = threading.Thread(
+        target=download_video,
+        args=(url, format_choice, download_id)
+    )
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({
+        "download_id": download_id,
+        "message": "Download started"
+    })
+
+
+@app.route("/progress/<download_id>")
+def progress(download_id):
+    """Get download progress"""
+    if download_id in download_progress:
+        return jsonify(download_progress[download_id])
+    return jsonify({"error": "Download not found"}), 404
+
+
+@app.route("/file/<filename>")
+def serve_file(filename):
+    """Serve downloaded file"""
+    return send_from_directory(DOWNLOAD_FOLDER, filename, as_attachment=True)
+
+
+@app.route("/downloads")
+def list_downloads():
+    """List all downloaded files"""
+    files = []
+    if os.path.exists(DOWNLOAD_FOLDER):
+        for f in os.listdir(DOWNLOAD_FOLDER):
+            filepath = os.path.join(DOWNLOAD_FOLDER, f)
+            if os.path.isfile(filepath):
+                files.append({
+                    'filename': f,
+                    'size': os.path.getsize(filepath),
+                    'modified': datetime.fromtimestamp(os.path.getmtime(filepath)).isoformat()
+                })
+
+    # Sort by modification time, newest first
+    files.sort(key=lambda x: x['modified'], reverse=True)
+    return jsonify({"files": files})
+
+
+def get_local_ip():
+    """Get the local IP address for network access"""
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
+if __name__ == "__main__":
+    local_ip = get_local_ip()
+
+    print("\n" + "="*50)
+    print("  YouTube Video Downloader")
+    print("="*50)
+    print(f"\n[*] Local:   http://localhost:5051")
+    print(f"[*] Network: http://{local_ip}:5051  <- Use this on your phone")
+    print("[*] Press Ctrl+C to stop\n")
+
+    # host='0.0.0.0' allows access from other devices on the network
+    app.run(debug=True, port=5051, host='0.0.0.0')

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <link rel="stylesheet" href="/static/youtube.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>YouTube Video Downloader</h1>
+            <p class="subtitle">Download videos in various formats and qualities</p>
+        </header>
+
+        <main>
+            <!-- URL Input Section -->
+            <section class="input-section">
+                <div class="url-input-wrapper">
+                    <input
+                        type="text"
+                        id="url-input"
+                        placeholder="Paste YouTube URL here..."
+                        autocomplete="off"
+                    >
+                    <button id="fetch-btn" class="btn btn-primary">
+                        <span class="btn-text">Fetch Info</span>
+                        <span class="btn-loading hidden">Loading...</span>
+                    </button>
+                </div>
+                <p class="hint">Supports youtube.com and youtu.be links</p>
+            </section>
+
+            <!-- Video Info Section (hidden by default) -->
+            <section id="video-info" class="video-info hidden">
+                <div class="video-preview">
+                    <img id="video-thumbnail" src="" alt="Video thumbnail">
+                    <div class="video-duration" id="video-duration"></div>
+                </div>
+                <div class="video-details">
+                    <h2 id="video-title"></h2>
+                    <p class="video-meta">
+                        <span id="video-uploader"></span>
+                        <span class="separator">|</span>
+                        <span id="video-views"></span>
+                    </p>
+                    <p id="video-description" class="video-description"></p>
+                </div>
+            </section>
+
+            <!-- Download Options (hidden by default) -->
+            <section id="download-options" class="download-options hidden">
+                <h3>Select Format</h3>
+                <div class="format-grid">
+                    <button class="format-btn" data-format="best">
+                        <span class="format-icon">HD</span>
+                        <span class="format-label">Best Quality</span>
+                        <span class="format-desc">Highest available resolution</span>
+                    </button>
+                    <button class="format-btn" data-format="720p">
+                        <span class="format-icon">720p</span>
+                        <span class="format-label">HD Ready</span>
+                        <span class="format-desc">Good quality, smaller size</span>
+                    </button>
+                    <button class="format-btn" data-format="480p">
+                        <span class="format-icon">480p</span>
+                        <span class="format-label">Standard</span>
+                        <span class="format-desc">Balanced quality and size</span>
+                    </button>
+                    <button class="format-btn" data-format="360p">
+                        <span class="format-icon">360p</span>
+                        <span class="format-label">Low</span>
+                        <span class="format-desc">Smallest file size</span>
+                    </button>
+                    <button class="format-btn" data-format="audio">
+                        <span class="format-icon">MP3</span>
+                        <span class="format-label">Audio Only</span>
+                        <span class="format-desc">Extract audio as MP3</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Progress Section (hidden by default) -->
+            <section id="progress-section" class="progress-section hidden">
+                <div class="progress-info">
+                    <span id="progress-status">Starting download...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="progress-details" class="progress-details"></p>
+            </section>
+
+            <!-- Download Complete Section (hidden by default) -->
+            <section id="complete-section" class="complete-section hidden">
+                <div class="complete-icon">&#10003;</div>
+                <h3>Download Complete!</h3>
+                <a id="download-link" href="#" class="btn btn-success">
+                    Download File
+                </a>
+                <button id="new-download-btn" class="btn btn-secondary">
+                    Download Another
+                </button>
+            </section>
+
+            <!-- Error Section (hidden by default) -->
+            <section id="error-section" class="error-section hidden">
+                <div class="error-icon">!</div>
+                <h3>Error</h3>
+                <p id="error-message"></p>
+                <button id="retry-btn" class="btn btn-secondary">
+                    Try Again
+                </button>
+            </section>
+
+            <!-- Recent Downloads -->
+            <section class="downloads-section">
+                <h3>Recent Downloads</h3>
+                <div id="downloads-list" class="downloads-list">
+                    <p class="no-downloads">No downloads yet</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by yt-dlp</p>
+        </footer>
+    </div>
+
+    <script src="/static/youtube.js"></script>
+</body>
+</html>
