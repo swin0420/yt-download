@@ -11,12 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const completeSection = document.getElementById('complete-section');
     const errorSection = document.getElementById('error-section');
     const downloadsList = document.getElementById('downloads-list');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('.theme-icon');
 
     let currentUrl = '';
     let currentBrowser = 'none';
 
     // Initialize
     loadDownloads();
+    initTheme();
 
     // Event Listeners
     fetchBtn.addEventListener('click', fetchVideoInfo);
@@ -25,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchVideoInfo();
         }
     });
+    themeToggle.addEventListener('click', toggleTheme);
 
     // Format button clicks
     document.querySelectorAll('.format-btn').forEach(btn => {
@@ -276,5 +280,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Theme: Initialize from localStorage
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            themeIcon.innerHTML = '&#9790;'; // Moon
+        }
+    }
+
+    // Theme: Toggle between dark and light
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        themeIcon.innerHTML = isLight ? '&#9790;' : '&#9788;'; // Moon or Sun
     }
 });

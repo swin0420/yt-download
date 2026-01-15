@@ -334,4 +334,6 @@ if __name__ == "__main__":
     print("[*] Press Ctrl+C to stop\n")
 
     # host='0.0.0.0' allows access from other devices on the network
-    app.run(debug=True, port=5051, host='0.0.0.0')
+    # Set DEBUG=1 environment variable to enable debug mode (not recommended for network use)
+    debug_mode = os.environ.get('DEBUG', '').lower() in ('1', 'true')
+    app.run(debug=debug_mode, port=5051, host='0.0.0.0')
