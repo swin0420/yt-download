@@ -51,9 +51,14 @@ Frontend (templates/ + static/)
 - Format options: best/720p/480p/360p/audio-only (MP3/FLAC)
 - `GET /ytdlp-version` returns current yt-dlp version
 - `POST /update-ytdlp` upgrades yt-dlp via pip (handles YouTube API changes)
+- `GET /downloads` lists all downloaded files (shared across all devices on the network)
 
 **Key Frontend Details:**
 - Polls `/progress/<id>` at 500ms intervals
 - State variables: `currentUrl`, `currentBrowser`, format selection
 - Helper functions: `formatDuration`, `formatViews`, `formatBytes`, `escapeHtml`
 - Footer shows yt-dlp version with update button for easy upgrades
+
+## Project Status
+
+This project is feature-complete and stable. No new features are planned.

@@ -13,6 +13,8 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 - Progress tracking with speed and ETA
 - Dark/light theme toggle
 - Browser cookie support for restricted content
+- Shared download history across all devices on your network
+- One-click yt-dlp updates from the web UI
 - Works on macOS, Linux, and Windows
 
 ## Quick Start
@@ -107,6 +109,10 @@ For age-restricted or private videos, select your browser from the dropdown. Mak
 
 **"Sign in to confirm you're not a bot"**
 - Select your browser from the dropdown (must be logged into YouTube)
+
+**Videos not downloading or extraction errors**
+- Click the "Update yt-dlp" button in the footer to get the latest version
+- YouTube frequently changes their API, and yt-dlp updates fix these issues
 
 ## Tech Stack
 
