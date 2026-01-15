@@ -169,6 +169,12 @@ def download_video(url, format_choice, download_id, browser='none'):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
+        elif format_choice == 'flac':
+            ydl_opts['format'] = 'bestaudio/best'
+            ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'flac',
+            }]
         elif format_choice == '1080p':
             ydl_opts['format'] = 'best[height<=1080][ext=mp4]/best[height<=1080]/best'
         elif format_choice == '720p':
@@ -187,6 +193,8 @@ def download_video(url, format_choice, download_id, browser='none'):
             # Handle audio extraction filename change
             if format_choice == 'audio':
                 filename = os.path.splitext(filename)[0] + '.mp3'
+            elif format_choice == 'flac':
+                filename = os.path.splitext(filename)[0] + '.flac'
 
             # Get just the filename without path
             basename = os.path.basename(filename)
