@@ -341,7 +341,13 @@ if __name__ == "__main__":
     print(f"[*] Network: http://{local_ip}:5051  <- Use this on your phone")
     print("[*] Press Ctrl+C to stop\n")
 
-    # host='0.0.0.0' allows access from other devices on the network
-    # Set DEBUG=1 environment variable to enable debug mode (not recommended for network use)
-    debug_mode = os.environ.get('DEBUG', '').lower() in ('1', 'true')
-    app.run(debug=debug_mode, port=5051, host='0.0.0.0')
+    # Use Waitress for production-quality serving (handles broken pipes gracefully)
+    try:
+        from waitress import serve
+        print("[*] Using Waitress server")
+        serve(app, host='0.0.0.0', port=5051, threads=4)
+    except ImportError:
+        print("[!] Waitress not installed, using Flask dev server")
+        print("[!] Run: pip install waitress (recommended for phone access)")
+        debug_mode = os.environ.get('DEBUG', '').lower() in ('1', 'true')
+        app.run(debug=debug_mode, port=5051, host='0.0.0.0')
