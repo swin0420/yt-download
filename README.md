@@ -43,7 +43,9 @@ sudo apt update && sudo apt install ffmpeg
 ```
 
 **Windows:**
-Download from https://ffmpeg.org/download.html and add to PATH.
+```bash
+winget install Gyan.FFmpeg
+```
 
 ### 4. Run the app
 
