@@ -295,6 +295,8 @@ def list_downloads():
     files = []
     if os.path.exists(DOWNLOAD_FOLDER):
         for f in os.listdir(DOWNLOAD_FOLDER):
+            if f.startswith('.'):
+                continue  # Skip hidden files like .DS_Store
             filepath = os.path.join(DOWNLOAD_FOLDER, f)
             if os.path.isfile(filepath):
                 files.append({
