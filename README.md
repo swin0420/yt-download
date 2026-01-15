@@ -2,7 +2,8 @@
 
 A self-hosted web app for downloading YouTube videos using yt-dlp.
 
-![Screenshot](screenshot.png)
+![Dark Theme](screenshot-dark.png)
+![Light Theme](screenshot-light.png)
 
 ## Features
 
