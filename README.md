@@ -22,15 +22,22 @@ git clone https://github.com/Cannibal420/yt-download.git
 cd yt-download
 ```
 
-### 2. Install Python dependencies
+### 2. Set up virtual environment (macOS)
+
+Homebrew Python requires a virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Python dependencies
 
 ```bash
 pip install -r requirements.txt
-# or
-pip3 install -r requirements.txt
 ```
 
-### 3. Install ffmpeg
+### 4. Install ffmpeg
 
 **macOS (Homebrew):**
 ```bash
@@ -47,21 +54,20 @@ sudo apt update && sudo apt install ffmpeg
 winget install Gyan.FFmpeg
 ```
 
-### 4. Run the app
+### 5. Run the app
 
 ```bash
-python app.py
-# or
-python3 app.py
+python app.py       # Linux/Windows
+python3 app.py      # macOS
 ```
 
-### 5. Open in browser
+### 6. Open in browser
 
 ```
 http://localhost:5051
 ```
 
-### 6. Access from your phone (optional)
+### 7. Access from your phone (optional)
 
 When the server starts, it displays a network URL:
 
