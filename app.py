@@ -5,11 +5,10 @@ A Flask app for downloading YouTube videos using yt-dlp
 
 import os
 import uuid
-import json
 import time
 import threading
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory, Response
+from flask import Flask, render_template, request, jsonify, send_from_directory, abort
 
 try:
     import yt_dlp
@@ -294,6 +293,9 @@ def progress(download_id):
 @app.route("/file/<filename>")
 def serve_file(filename):
     """Serve downloaded file"""
+    # Security: prevent path traversal attacks
+    if '..' in filename or filename.startswith('/'):
+        abort(400)
     return send_from_directory(DOWNLOAD_FOLDER, filename, as_attachment=True)
 
 
