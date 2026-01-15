@@ -8,7 +8,7 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 ## Features
 
 - Download videos in multiple qualities (Best, 1080p, 720p, 480p, 360p)
-- Extract audio as MP3
+- Extract audio as MP3 or FLAC (lossless)
 - Supports YouTube, Twitter, TikTok, Instagram, and more
 - Progress tracking with speed and ETA
 - Dark/light theme toggle
