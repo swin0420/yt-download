@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Video Downloader</title>
+    <title>Video Downloader</title>
     <link rel="stylesheet" href="/static/youtube.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>YouTube Video Downloader</h1>
+            <h1>Video Downloader</h1>
             <p class="subtitle">Download videos in various formats and qualities</p>
         </header>
 
@@ -20,15 +20,23 @@
                     <input
                         type="text"
                         id="url-input"
-                        placeholder="Paste YouTube URL here..."
+                        placeholder="Paste video URL here (YouTube, Twitter/X, etc.)..."
                         autocomplete="off"
                     >
+                    <select id="browser-select" class="browser-select">
+                        <option value="none">No Cookies</option>
+                        <option value="brave">Brave</option>
+                        <option value="chrome">Chrome</option>
+                        <option value="firefox">Firefox</option>
+                        <option value="safari">Safari</option>
+                        <option value="edge">Edge</option>
+                    </select>
                     <button id="fetch-btn" class="btn btn-primary">
                         <span class="btn-text">Fetch Info</span>
                         <span class="btn-loading hidden">Loading...</span>
                     </button>
                 </div>
-                <p class="hint">Supports youtube.com and youtu.be links</p>
+                <p class="hint">Supports YouTube, Twitter/X, Instagram, TikTok & more | Browser cookies for restricted content</p>
             </section>
 
             <!-- Video Info Section (hidden by default) -->
@@ -97,7 +105,7 @@
                 <div class="complete-icon">&#10003;</div>
                 <h3>Download Complete!</h3>
                 <a id="download-link" href="#" class="btn btn-success">
-                    Download File
+                    Save File
                 </a>
                 <button id="new-download-btn" class="btn btn-secondary">
                     Download Another

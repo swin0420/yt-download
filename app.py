@@ -32,13 +32,25 @@ def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
 
 
-def get_video_info(url):
+def get_video_info(url, browser='none'):
     """Get video information without downloading"""
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'extract_flat': False,
+        'ffmpeg_location': '/opt/homebrew/bin/',
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
     }
+
+    # YouTube-specific settings
+    if 'youtube.com' in url or 'youtu.be' in url:
+        ydl_opts['extractor_args'] = {'youtube': {'player_client': ['tv', 'web_safari']}}
+
+    # Add browser cookies if not 'none'
+    if browser and browser != 'none':
+        ydl_opts['cookiesfrombrowser'] = (browser,)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -97,7 +109,7 @@ def progress_hook(d, download_id):
         }
 
 
-def download_video(url, format_choice, download_id):
+def download_video(url, format_choice, download_id, browser='none'):
     """Download video in background thread"""
     try:
         # Set output template
@@ -108,11 +120,23 @@ def download_video(url, format_choice, download_id):
             'progress_hooks': [lambda d: progress_hook(d, download_id)],
             'quiet': True,
             'no_warnings': True,
+            'ffmpeg_location': '/opt/homebrew/bin/',
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            },
         }
 
-        # Configure format based on choice
+        # YouTube-specific settings
+        if 'youtube.com' in url or 'youtu.be' in url:
+            ydl_opts['extractor_args'] = {'youtube': {'player_client': ['tv', 'web_safari']}}
+
+        # Add browser cookies if not 'none'
+        if browser and browser != 'none':
+            ydl_opts['cookiesfrombrowser'] = (browser,)
+
+        # Configure format based on choice - prefer pre-combined formats to avoid 403
         if format_choice == 'best':
-            ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+            ydl_opts['format'] = 'best[ext=mp4]/best'
         elif format_choice == 'audio':
             ydl_opts['format'] = 'bestaudio/best'
             ydl_opts['postprocessors'] = [{
@@ -121,11 +145,11 @@ def download_video(url, format_choice, download_id):
                 'preferredquality': '192',
             }]
         elif format_choice == '720p':
-            ydl_opts['format'] = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best'
+            ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[height<=720]/best'
         elif format_choice == '480p':
-            ydl_opts['format'] = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best'
+            ydl_opts['format'] = 'best[height<=480][ext=mp4]/best[height<=480]/best'
         elif format_choice == '360p':
-            ydl_opts['format'] = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best'
+            ydl_opts['format'] = 'best[height<=360][ext=mp4]/best[height<=360]/best'
         else:
             ydl_opts['format'] = format_choice
 
@@ -164,17 +188,17 @@ def video_info():
     """Get video information"""
     data = request.get_json()
     url = data.get("url", "").strip()
+    browser = data.get("browser", "none")
 
     if not url:
-        return jsonify({"error": "Please enter a YouTube URL"}), 400
+        return jsonify({"error": "Please enter a video URL"}), 400
 
-    # Basic URL validation
-    youtube_pattern = r'(youtube\.com|youtu\.be)'
-    if not re.search(youtube_pattern, url):
-        return jsonify({"error": "Please enter a valid YouTube URL"}), 400
+    # Basic URL validation - accept any http/https URL
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
 
     try:
-        info = get_video_info(url)
+        info = get_video_info(url, browser)
         return jsonify(info)
     except Exception as e:
         return jsonify({"error": f"Could not fetch video info: {str(e)}"}), 400
@@ -186,9 +210,14 @@ def download():
     data = request.get_json()
     url = data.get("url", "").strip()
     format_choice = data.get("format", "best")
+    browser = data.get("browser", "none")
 
     if not url:
-        return jsonify({"error": "Please enter a YouTube URL"}), 400
+        return jsonify({"error": "Please enter a video URL"}), 400
+
+    # Add https if missing
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
 
     # Generate unique download ID
     download_id = uuid.uuid4().hex[:12]
@@ -202,7 +231,7 @@ def download():
     # Start download in background thread
     thread = threading.Thread(
         target=download_video,
-        args=(url, format_choice, download_id)
+        args=(url, format_choice, download_id, browser)
     )
     thread.daemon = True
     thread.start()

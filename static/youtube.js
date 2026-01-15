@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const urlInput = document.getElementById('url-input');
     const fetchBtn = document.getElementById('fetch-btn');
+    const browserSelect = document.getElementById('browser-select');
     const videoInfo = document.getElementById('video-info');
     const downloadOptions = document.getElementById('download-options');
     const progressSection = document.getElementById('progress-section');
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const downloadsList = document.getElementById('downloads-list');
 
     let currentUrl = '';
+    let currentBrowser = 'none';
 
     // Initialize
     loadDownloads();
@@ -45,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         currentUrl = url;
+        currentBrowser = browserSelect.value;
         setLoading(true);
         hideAllSections();
 
@@ -52,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/info', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
+                body: JSON.stringify({ url, browser: currentBrowser })
             });
 
             const data = await response.json();
@@ -91,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: currentUrl, format })
+                body: JSON.stringify({ url: currentUrl, format, browser: currentBrowser })
             });
 
             const data = await response.json();

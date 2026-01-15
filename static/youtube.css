@@ -83,6 +83,22 @@ header h1 {
     color: var(--text-secondary);
 }
 
+.browser-select {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface-color);
+    color: var(--text-color);
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.browser-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 .hint {
     font-size: 0.85rem;
     color: var(--text-secondary);
