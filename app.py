@@ -23,6 +23,24 @@ app = Flask(__name__)
 DOWNLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "downloads")
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
+def get_ffmpeg_location():
+    """Auto-detect ffmpeg location"""
+    import shutil
+    # Check common locations
+    locations = [
+        shutil.which('ffmpeg'),  # System PATH
+        '/opt/homebrew/bin/ffmpeg',  # macOS Apple Silicon (Homebrew)
+        '/usr/local/bin/ffmpeg',  # macOS Intel (Homebrew)
+        '/usr/bin/ffmpeg',  # Linux
+        'C:\\ffmpeg\\bin\\ffmpeg.exe',  # Windows
+    ]
+    for loc in locations:
+        if loc and os.path.exists(loc):
+            return os.path.dirname(loc)
+    return None  # Let yt-dlp try to find it
+
+FFMPEG_LOCATION = get_ffmpeg_location()
+
 # Track download progress
 download_progress = {}
 
@@ -38,7 +56,7 @@ def get_video_info(url, browser='none'):
         'quiet': True,
         'no_warnings': True,
         'extract_flat': False,
-        'ffmpeg_location': '/opt/homebrew/bin/',
+        'ffmpeg_location': FFMPEG_LOCATION,
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
@@ -120,7 +138,7 @@ def download_video(url, format_choice, download_id, browser='none'):
             'progress_hooks': [lambda d: progress_hook(d, download_id)],
             'quiet': True,
             'no_warnings': True,
-            'ffmpeg_location': '/opt/homebrew/bin/',
+            'ffmpeg_location': FFMPEG_LOCATION,
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             },
