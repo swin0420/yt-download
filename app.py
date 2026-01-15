@@ -4,9 +4,9 @@ A Flask app for downloading YouTube videos using yt-dlp
 """
 
 import os
-import re
 import uuid
 import json
+import time
 import threading
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response
@@ -41,13 +41,18 @@ def get_ffmpeg_location():
 
 FFMPEG_LOCATION = get_ffmpeg_location()
 
-# Track download progress
+# Track download progress (with timestamps for cleanup)
 download_progress = {}
 
-
-def sanitize_filename(filename):
-    """Remove invalid characters from filename"""
-    return re.sub(r'[<>:"/\\|?*]', '_', filename)
+def cleanup_old_progress(max_age_seconds=3600):
+    """Remove progress entries older than max_age_seconds"""
+    now = time.time()
+    to_delete = [
+        k for k, v in download_progress.items()
+        if v.get('timestamp', 0) < now - max_age_seconds
+    ]
+    for k in to_delete:
+        del download_progress[k]
 
 
 def get_video_info(url, browser='none'):
@@ -119,11 +124,13 @@ def progress_hook(d, download_id):
             'percent': round(percent, 1),
             'speed': d.get('speed', 0),
             'eta': d.get('eta', 0),
+            'timestamp': time.time(),
         }
     elif d['status'] == 'finished':
         download_progress[download_id] = {
             'status': 'processing',
             'percent': 100,
+            'timestamp': time.time(),
         }
 
 
@@ -162,6 +169,8 @@ def download_video(url, format_choice, download_id, browser='none'):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
+        elif format_choice == '1080p':
+            ydl_opts['format'] = 'best[height<=1080][ext=mp4]/best[height<=1080]/best'
         elif format_choice == '720p':
             ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[height<=720]/best'
         elif format_choice == '480p':
@@ -186,12 +195,14 @@ def download_video(url, format_choice, download_id, browser='none'):
                 'status': 'complete',
                 'percent': 100,
                 'filename': basename,
+                'timestamp': time.time(),
             }
 
     except Exception as e:
         download_progress[download_id] = {
             'status': 'error',
             'error': str(e),
+            'timestamp': time.time(),
         }
 
 
@@ -240,10 +251,14 @@ def download():
     # Generate unique download ID
     download_id = uuid.uuid4().hex[:12]
 
-    # Initialize progress
+    # Cleanup old progress entries
+    cleanup_old_progress()
+
+    # Initialize progress with timestamp
     download_progress[download_id] = {
         'status': 'starting',
         'percent': 0,
+        'timestamp': time.time(),
     }
 
     # Start download in background thread
