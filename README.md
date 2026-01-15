@@ -7,10 +7,11 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 
 ## Features
 
-- Download videos in multiple qualities (Best, 720p, 480p, 360p)
+- Download videos in multiple qualities (Best, 1080p, 720p, 480p, 360p)
 - Extract audio as MP3
+- Supports YouTube, Twitter, TikTok, Instagram, and more
 - Progress tracking with speed and ETA
-- Dark themed UI
+- Dark/light theme toggle
 - Browser cookie support for restricted content
 - Works on macOS, Linux, and Windows
 
@@ -94,13 +95,6 @@ To access from your phone:
 ## Browser Cookies
 
 For age-restricted or private videos, select your browser from the dropdown. Make sure you're logged into YouTube on that browser.
-
-Supported browsers:
-- Brave
-- Chrome
-- Firefox
-- Safari
-- Edge
 
 ## Troubleshooting
 
