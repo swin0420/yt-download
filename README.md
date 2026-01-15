@@ -2,6 +2,8 @@
 
 A self-hosted web app for downloading YouTube videos using yt-dlp.
 
+![Screenshot](screenshot.png)
+
 ## Features
 
 - Download videos in multiple qualities (Best, 720p, 480p, 360p)
