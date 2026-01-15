@@ -59,6 +59,20 @@ python3 app.py
 http://localhost:5051
 ```
 
+### 6. Access from your phone (optional)
+
+When the server starts, it displays a network URL:
+
+```
+[*] Local:   http://localhost:5051
+[*] Network: http://192.168.x.x:5051  <- Use this on your phone
+```
+
+To access from your phone:
+1. Make sure your phone is on the same Wi-Fi network as your computer
+2. Open the **Network** URL shown in the terminal on your phone's browser
+3. Download videos directly to your phone
+
 ## Usage
 
 1. Paste a YouTube URL
