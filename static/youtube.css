@@ -492,6 +492,41 @@ footer {
     font-size: 0.9rem;
 }
 
+.footer-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+#ytdlp-version {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.btn-update {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--surface-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-update:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    background: var(--surface-hover);
+}
+
+.btn-update:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {

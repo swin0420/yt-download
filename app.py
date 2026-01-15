@@ -318,6 +318,59 @@ def list_downloads():
     return jsonify({"files": files})
 
 
+@app.route("/ytdlp-version")
+def ytdlp_version():
+    """Get current yt-dlp version"""
+    return jsonify({"version": yt_dlp.version.__version__})
+
+
+@app.route("/update-ytdlp", methods=["POST"])
+def update_ytdlp():
+    """Update yt-dlp to the latest version"""
+    import subprocess
+    import sys
+
+    try:
+        old_version = yt_dlp.version.__version__
+
+        # Run pip upgrade
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+
+        if result.returncode != 0:
+            return jsonify({
+                "success": False,
+                "error": result.stderr or "Update failed"
+            }), 500
+
+        # Reload yt_dlp to get new version
+        import importlib
+        importlib.reload(yt_dlp.version)
+        new_version = yt_dlp.version.__version__
+
+        return jsonify({
+            "success": True,
+            "old_version": old_version,
+            "new_version": new_version,
+            "message": f"Updated from {old_version} to {new_version}" if old_version != new_version else "Already up to date"
+        })
+
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            "success": False,
+            "error": "Update timed out"
+        }), 500
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 def get_local_ip():
     """Get the local IP address for network access"""
     import socket

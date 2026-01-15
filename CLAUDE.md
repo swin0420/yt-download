@@ -26,7 +26,7 @@ python app.py
 
 ```
 Flask Backend (app.py)
-├── Routes: /, /info, /download, /progress/<id>, /file/<name>, /downloads
+├── Routes: /, /info, /download, /progress/<id>, /file/<name>, /downloads, /ytdlp-version, /update-ytdlp
 ├── yt-dlp integration for video extraction
 ├── Background thread downloads with progress tracking
 └── Browser cookie authentication (Brave, Chrome, Firefox, Safari, Edge)
@@ -48,9 +48,12 @@ Frontend (templates/ + static/)
 - `progress_hook()` callback updates progress during yt-dlp download
 - `get_ffmpeg_location()` auto-detects ffmpeg on macOS/Linux/Windows
 - Uses yt-dlp's `cookiesfrombrowser` for authenticated downloads
-- Format options: best/720p/480p/360p/audio-only (MP3)
+- Format options: best/720p/480p/360p/audio-only (MP3/FLAC)
+- `GET /ytdlp-version` returns current yt-dlp version
+- `POST /update-ytdlp` upgrades yt-dlp via pip (handles YouTube API changes)
 
 **Key Frontend Details:**
 - Polls `/progress/<id>` at 500ms intervals
 - State variables: `currentUrl`, `currentBrowser`, format selection
 - Helper functions: `formatDuration`, `formatViews`, `formatBytes`, `escapeHtml`
+- Footer shows yt-dlp version with update button for easy upgrades

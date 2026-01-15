@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize
     loadDownloads();
     initTheme();
+    loadYtdlpVersion();
 
     // Event Listeners
     fetchBtn.addEventListener('click', fetchVideoInfo);
@@ -29,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     themeToggle.addEventListener('click', toggleTheme);
+
+    // Update yt-dlp button
+    const updateBtn = document.getElementById('update-ytdlp-btn');
+    if (updateBtn) {
+        updateBtn.addEventListener('click', updateYtdlp);
+    }
 
     // Format button clicks
     document.querySelectorAll('.format-btn').forEach(btn => {
@@ -297,5 +304,48 @@ document.addEventListener('DOMContentLoaded', function() {
         const isLight = document.body.classList.contains('light-theme');
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
         themeIcon.innerHTML = isLight ? '&#9790;' : '&#9788;'; // Moon or Sun
+    }
+
+    // Load yt-dlp version
+    async function loadYtdlpVersion() {
+        try {
+            const response = await fetch('/ytdlp-version');
+            const data = await response.json();
+            const versionSpan = document.getElementById('ytdlp-version');
+            if (versionSpan && data.version) {
+                versionSpan.textContent = `v${data.version}`;
+            }
+        } catch (error) {
+            console.error('Failed to load yt-dlp version:', error);
+        }
+    }
+
+    // Update yt-dlp
+    async function updateYtdlp() {
+        const btn = document.getElementById('update-ytdlp-btn');
+        const textSpan = btn.querySelector('.update-text');
+        const loadingSpan = btn.querySelector('.update-loading');
+
+        btn.disabled = true;
+        textSpan.classList.add('hidden');
+        loadingSpan.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/update-ytdlp', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                alert(data.message);
+                loadYtdlpVersion();
+            } else {
+                alert('Update failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Update failed: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            textSpan.classList.remove('hidden');
+            loadingSpan.classList.add('hidden');
+        }
     }
 });
