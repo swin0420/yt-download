@@ -163,14 +163,14 @@ def download_video(url, format_choice, download_id, browser='none'):
         if format_choice == 'best':
             ydl_opts['format'] = 'best[ext=mp4]/best'
         elif format_choice == 'audio':
-            ydl_opts['format'] = 'bestaudio/best'
+            ydl_opts['format'] = 'best[ext=mp4]/best'
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
         elif format_choice == 'flac':
-            ydl_opts['format'] = 'bestaudio/best'
+            ydl_opts['format'] = 'best[ext=mp4]/best'
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'flac',
