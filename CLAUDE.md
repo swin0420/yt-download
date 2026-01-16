@@ -71,7 +71,24 @@ launchctl load ~/Library/LaunchAgents/com.nekonya.ytdownloader.plist
 The plist is configured to:
 - Use Python from `./venv/bin/python`
 - Set PATH to include `/opt/homebrew/bin` (for Node.js access)
+- Set authentication env vars (`YT_AUTH_USER`, `YT_AUTH_PASS`, `YT_AUTH_ENABLED`)
 - Auto-restart if crashed (`KeepAlive: true`)
+
+## Authentication & Rate Limiting
+
+The app includes security features for network deployment:
+
+**Authentication** (enabled by default):
+```bash
+# Environment variables
+YT_AUTH_ENABLED=true   # Enable/disable auth
+YT_AUTH_USER=admin     # Username (default: admin)
+YT_AUTH_PASS=changeme  # Password (default: changeme)
+```
+
+**Rate Limiting**:
+- Downloads: 10 per 10 minutes per IP (configurable via `DOWNLOAD_RATE_LIMIT`, `DOWNLOAD_RATE_WINDOW`)
+- yt-dlp updates: 5 minute cooldown (`UPDATE_COOLDOWN`)
 
 ## Architecture
 

@@ -6,9 +6,13 @@ A Flask app for downloading YouTube videos using yt-dlp
 import os
 import uuid
 import time
+import logging
 import threading
+from functools import wraps
+from collections import defaultdict
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory, abort
+from flask import Flask, render_template, request, jsonify, send_from_directory, abort, Response
+from werkzeug.utils import secure_filename
 
 try:
     import yt_dlp
@@ -16,7 +20,79 @@ except ImportError:
     print("Please install yt-dlp: pip install yt-dlp")
     raise
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
+
+# =============================================================================
+# AUTHENTICATION
+# =============================================================================
+# Set these environment variables, or change the defaults below
+AUTH_USERNAME = os.environ.get('YT_AUTH_USER', 'admin')
+AUTH_PASSWORD = os.environ.get('YT_AUTH_PASS', 'changeme')
+AUTH_ENABLED = os.environ.get('YT_AUTH_ENABLED', 'true').lower() in ('1', 'true', 'yes')
+
+def check_auth(username, password):
+    """Check if username/password combination is valid"""
+    return username == AUTH_USERNAME and password == AUTH_PASSWORD
+
+def authenticate():
+    """Send 401 response that enables basic auth"""
+    return Response(
+        'Authentication required. Please log in.',
+        401,
+        {'WWW-Authenticate': 'Basic realm="YouTube Downloader"'}
+    )
+
+def requires_auth(f):
+    """Decorator to require authentication on routes"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not AUTH_ENABLED:
+            return f(*args, **kwargs)
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+# =============================================================================
+# RATE LIMITING
+# =============================================================================
+# Download rate limit: 10 downloads per 10 minutes per IP
+DOWNLOAD_RATE_LIMIT = 10  # max downloads
+DOWNLOAD_RATE_WINDOW = 600  # 10 minutes in seconds
+download_requests = defaultdict(list)
+
+# Update cooldown: 5 minutes between updates (global)
+UPDATE_COOLDOWN = 300  # 5 minutes in seconds
+last_update_time = 0
+
+def check_download_rate_limit(ip):
+    """
+    Check if IP is within rate limit for downloads.
+    Returns (allowed, remaining, reset_seconds)
+    """
+    now = time.time()
+    # Clean old entries
+    download_requests[ip] = [t for t in download_requests[ip] if now - t < DOWNLOAD_RATE_WINDOW]
+
+    remaining = DOWNLOAD_RATE_LIMIT - len(download_requests[ip])
+
+    if remaining <= 0:
+        # Calculate when the oldest request will expire
+        oldest = min(download_requests[ip])
+        reset_seconds = int(DOWNLOAD_RATE_WINDOW - (now - oldest))
+        return False, 0, reset_seconds
+
+    # Record this request
+    download_requests[ip].append(now)
+    return True, remaining - 1, 0
 
 # Configuration
 DOWNLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "downloads")
@@ -218,12 +294,14 @@ def download_video(url, format_choice, download_id, browser='none'):
 
 
 @app.route("/")
+@requires_auth
 def index():
     """Serve the main webpage"""
     return render_template("youtube.html")
 
 
 @app.route("/info", methods=["POST"])
+@requires_auth
 def video_info():
     """Get video information"""
     data = request.get_json()
@@ -241,12 +319,26 @@ def video_info():
         info = get_video_info(url, browser)
         return jsonify(info)
     except Exception as e:
-        return jsonify({"error": f"Could not fetch video info: {str(e)}"}), 400
+        # Log full error for debugging, return sanitized message to user
+        logger.error(f"Failed to fetch video info for {url}: {e}")
+        return jsonify({"error": "Could not fetch video info. Please check the URL and try again."}), 400
 
 
 @app.route("/download", methods=["POST"])
+@requires_auth
 def download():
     """Start video download"""
+    # Check rate limit
+    client_ip = request.remote_addr
+    allowed, remaining, reset_seconds = check_download_rate_limit(client_ip)
+
+    if not allowed:
+        logger.warning(f"Rate limit exceeded for IP {client_ip}")
+        return jsonify({
+            "error": f"Rate limit exceeded. You can download {DOWNLOAD_RATE_LIMIT} videos per {DOWNLOAD_RATE_WINDOW // 60} minutes. Try again in {reset_seconds} seconds.",
+            "retry_after": reset_seconds
+        }), 429
+
     data = request.get_json()
     url = data.get("url", "").strip()
     format_choice = data.get("format", "best")
@@ -282,11 +374,13 @@ def download():
 
     return jsonify({
         "download_id": download_id,
-        "message": "Download started"
+        "message": "Download started",
+        "rate_limit_remaining": remaining
     })
 
 
 @app.route("/progress/<download_id>")
+@requires_auth
 def progress(download_id):
     """Get download progress"""
     if download_id in download_progress:
@@ -295,15 +389,26 @@ def progress(download_id):
 
 
 @app.route("/file/<filename>")
+@requires_auth
 def serve_file(filename):
     """Serve downloaded file"""
-    # Security: prevent path traversal attacks
-    if '..' in filename or filename.startswith('/'):
+    # Security: sanitize filename to prevent path traversal attacks
+    safe_name = secure_filename(filename)
+    if not safe_name:
+        logger.warning(f"Invalid filename requested: {filename}")
         abort(400)
-    return send_from_directory(DOWNLOAD_FOLDER, filename, as_attachment=True)
+
+    # Additional check: filename should match after sanitization
+    # This catches encoded traversal attempts like %2e%2e
+    if safe_name != filename:
+        logger.warning(f"Filename sanitization changed value: {filename} -> {safe_name}")
+        abort(400)
+
+    return send_from_directory(DOWNLOAD_FOLDER, safe_name, as_attachment=True)
 
 
 @app.route("/downloads")
+@requires_auth
 def list_downloads():
     """List all downloaded files"""
     files = []
@@ -325,19 +430,32 @@ def list_downloads():
 
 
 @app.route("/ytdlp-version")
+@requires_auth
 def ytdlp_version():
     """Get current yt-dlp version"""
     return jsonify({"version": yt_dlp.version.__version__})
 
 
 @app.route("/update-ytdlp", methods=["POST"])
+@requires_auth
 def update_ytdlp():
     """Update yt-dlp to the latest version"""
+    global last_update_time
     import subprocess
     import sys
 
+    # Check cooldown
+    now = time.time()
+    if now - last_update_time < UPDATE_COOLDOWN:
+        remaining = int(UPDATE_COOLDOWN - (now - last_update_time))
+        return jsonify({
+            "success": False,
+            "error": f"Please wait {remaining} seconds before updating again."
+        }), 429
+
     try:
         old_version = yt_dlp.version.__version__
+        last_update_time = now  # Set cooldown timer
 
         # Run pip upgrade
         result = subprocess.run(
@@ -348,9 +466,10 @@ def update_ytdlp():
         )
 
         if result.returncode != 0:
+            logger.error(f"yt-dlp update failed: {result.stderr}")
             return jsonify({
                 "success": False,
-                "error": result.stderr or "Update failed"
+                "error": "Update failed. Check server logs for details."
             }), 500
 
         # Reload yt_dlp to get new version
@@ -358,6 +477,7 @@ def update_ytdlp():
         importlib.reload(yt_dlp.version)
         new_version = yt_dlp.version.__version__
 
+        logger.info(f"yt-dlp updated: {old_version} -> {new_version}")
         return jsonify({
             "success": True,
             "old_version": old_version,
@@ -366,14 +486,16 @@ def update_ytdlp():
         })
 
     except subprocess.TimeoutExpired:
+        logger.error("yt-dlp update timed out")
         return jsonify({
             "success": False,
-            "error": "Update timed out"
+            "error": "Update timed out. Please try again."
         }), 500
     except Exception as e:
+        logger.error(f"yt-dlp update error: {e}")
         return jsonify({
             "success": False,
-            "error": str(e)
+            "error": "Update failed. Check server logs for details."
         }), 500
 
 
@@ -398,6 +520,17 @@ if __name__ == "__main__":
     print("="*50)
     print(f"\n[*] Local:   http://localhost:5051")
     print(f"[*] Network: http://{local_ip}:5051  <- Use this on your phone")
+
+    if AUTH_ENABLED:
+        print(f"\n[*] Authentication ENABLED")
+        print(f"    Username: {AUTH_USERNAME}")
+        print(f"    Password: {'*' * len(AUTH_PASSWORD)}")
+        print(f"    (Set YT_AUTH_USER and YT_AUTH_PASS env vars to change)")
+        print(f"    (Set YT_AUTH_ENABLED=false to disable)")
+    else:
+        print(f"\n[!] Authentication DISABLED")
+
+    print(f"\n[*] Rate limit: {DOWNLOAD_RATE_LIMIT} downloads per {DOWNLOAD_RATE_WINDOW // 60} minutes")
     print("[*] Press Ctrl+C to stop\n")
 
     # Use Waitress for production-quality serving (handles broken pipes gracefully)

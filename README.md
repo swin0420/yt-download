@@ -16,6 +16,7 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 - Shared download history across all devices on your network
 - One-click yt-dlp updates from the web UI
 - Works on macOS, Linux, and Windows
+- **Authentication** - Password protect your server
 
 ## System Requirements
 
@@ -87,6 +88,8 @@ python app.py
 http://localhost:5051
 ```
 
+Default login: `admin` / `changeme`
+
 ### 8. Access from your phone (optional)
 
 When the server starts, it displays a network URL:
@@ -94,9 +97,42 @@ When the server starts, it displays a network URL:
 ```
 [*] Local:   http://localhost:5051
 [*] Network: http://192.168.x.x:5051  <- Use this on your phone
+
+[*] Authentication ENABLED
+    Username: admin
+    Password: ********
 ```
 
-Make sure your phone is on the same Wi-Fi network.
+Make sure your phone is on the same Wi-Fi network. You'll be prompted to log in.
+
+## Authentication
+
+The server requires a username and password by default. Configure via environment variables:
+
+```bash
+# Set custom credentials
+export YT_AUTH_USER="myusername"
+export YT_AUTH_PASS="mysecretpassword"
+python app.py
+
+# Or disable authentication entirely (not recommended for shared networks)
+export YT_AUTH_ENABLED=false
+python app.py
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `YT_AUTH_ENABLED` | `true` | Enable/disable authentication |
+| `YT_AUTH_USER` | `admin` | Username |
+| `YT_AUTH_PASS` | `changeme` | Password |
+
+## Rate Limiting
+
+To prevent abuse, downloads are rate limited:
+
+- **10 downloads per 10 minutes** per IP address
+- Uses a sliding window (each download "expires" after 10 minutes)
+- Update yt-dlp has a **5 minute cooldown** between updates
 
 ## Usage
 
@@ -148,6 +184,10 @@ Make sure ffmpeg is installed and in your PATH.
 ### "Sign in to confirm you're not a bot"
 
 Select your browser from the dropdown (must be logged into YouTube).
+
+### "Rate limit exceeded"
+
+Wait for the cooldown period shown in the error message.
 
 ## Tech Stack
 
