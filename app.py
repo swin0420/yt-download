@@ -144,9 +144,8 @@ def get_video_info(url, browser='none'):
         },
     }
 
-    # YouTube-specific settings - use alternate player clients to avoid bot detection
-    if 'youtube.com' in url or 'youtu.be' in url:
-        ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web', 'mweb']}}
+    # Note: player_client restriction removed as it requires deno JS runtime
+    # yt-dlp defaults work better without special player_client settings
 
     # Add browser cookies if not 'none'
     if browser and browser != 'none':
@@ -229,9 +228,8 @@ def download_video(url, format_choice, download_id, browser='none'):
             },
         }
 
-        # YouTube-specific settings - use alternate player clients to avoid bot detection
-        if 'youtube.com' in url or 'youtu.be' in url:
-            ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web', 'mweb']}}
+        # Note: player_client restriction removed as it requires deno JS runtime
+        # yt-dlp defaults work better without special player_client settings
 
         # Add browser cookies if not 'none'
         if browser and browser != 'none':
