@@ -117,13 +117,19 @@ Frontend (templates/ + static/)
 
 ## Troubleshooting
 
-### "The downloaded file is empty" error
+### "No video formats found" or "Requested format is not available"
 
-YouTube is blocking the download. Try:
+This typically means YouTube is blocking requests. Solutions:
 
-1. **Select your browser** for cookie authentication
+1. **Select your browser** for cookie authentication (Chrome recommended)
 2. **Make sure you're logged into YouTube** in that browser
 3. **Update yt-dlp** via the button in the web UI footer
+
+**Note:** The app does NOT use special `player_client` settings as they require a JavaScript runtime (deno) to solve YouTube's n challenge. The default yt-dlp behavior works better without deno installed.
+
+### "The downloaded file is empty" error
+
+YouTube is blocking the download. Try the same steps as above.
 
 ### Low quality downloads (360p instead of 720p+)
 
