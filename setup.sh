@@ -56,12 +56,6 @@ check_dependencies() {
         log_warn "ffmpeg not found. Some features may not work."
     fi
 
-    # Check Node.js (optional, for YouTube signature solving)
-    if command -v node &> /dev/null; then
-        log_info "Node.js: $(node --version)"
-    else
-        log_warn "Node.js not found. YouTube downloads may fail."
-    fi
 }
 
 install_dependencies() {
@@ -69,11 +63,6 @@ install_dependencies() {
     source "$SCRIPT_DIR/venv/bin/activate"
     pip install --upgrade pip
     pip install flask waitress yt-dlp
-
-    # Optional: YouTube anti-bot plugins
-    pip install yt-dlp-ejs bgutil-ytdlp-pot-provider yt-dlp-get-pot 2>/dev/null || \
-        log_warn "Could not install YouTube plugins (optional)"
-
     deactivate
     log_info "Dependencies installed."
 }

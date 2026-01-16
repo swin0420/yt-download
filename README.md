@@ -22,8 +22,6 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 
 - **Python 3.10+** (3.12 recommended)
 - **ffmpeg** (for video/audio processing)
-- **Node.js** (for YouTube signature solving)
-- **Docker** (for YouTube PO token server)
 
 ## Quick Start
 
@@ -38,20 +36,18 @@ cd yt-download
 
 **macOS (Homebrew):**
 ```bash
-brew install python@3.12 node ffmpeg docker
+brew install python@3.12 ffmpeg
 ```
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt update && sudo apt install python3 python3-venv nodejs ffmpeg docker.io
+sudo apt update && sudo apt install python3 python3-venv ffmpeg
 ```
 
 **Windows:**
 ```powershell
 winget install Python.Python.3.12
-winget install OpenJS.NodeJS
 winget install Gyan.FFmpeg
-winget install Docker.DockerDesktop
 ```
 
 ### 3. Set up virtual environment (macOS/Linux only)
@@ -65,18 +61,9 @@ source venv/bin/activate
 
 ```bash
 pip install -r requirements.txt
-pip install yt-dlp-ejs bgutil-ytdlp-pot-provider yt-dlp-get-pot
 ```
 
-### 5. Start Docker PO Token Server (Required for YouTube)
-
-YouTube requires Proof of Origin tokens. Start the server:
-
-```bash
-docker run -d --name pot-server -p 4416:4416 --restart unless-stopped brainicism/bgutil-ytdlp-pot-provider
-```
-
-### 6. Run the app
+### 5. Run the app
 
 **Option A: Quick start (manual)**
 ```bash
@@ -105,7 +92,7 @@ This will:
 ./setup.sh uninstall # Remove auto-start
 ```
 
-### 7. Open in browser
+### 6. Open in browser
 
 ```
 http://localhost:5051
@@ -113,7 +100,7 @@ http://localhost:5051
 
 Default login: `admin` / `changeme`
 
-### 8. Access from your phone (optional)
+### 7. Access from your phone (optional)
 
 When the server starts, it displays a network URL:
 
@@ -160,7 +147,7 @@ To prevent abuse, downloads are rate limited:
 ## Usage
 
 1. Paste a YouTube URL
-2. Select your browser (for cookie auth)
+2. Select your browser (for cookie auth) - **Important for YouTube!**
 3. Click "Fetch Info"
 4. Choose quality/format
 5. Wait for download
@@ -168,43 +155,35 @@ To prevent abuse, downloads are rate limited:
 
 ## Browser Cookies
 
-For age-restricted or private videos, select your browser from the dropdown. Make sure you're logged into YouTube on that browser.
+For YouTube videos (and age-restricted/private content), **select your browser from the dropdown**. Make sure you're logged into YouTube on that browser.
+
+**Windows users:** Close the browser completely before using cookie auth (the browser locks its database while running).
 
 ## Troubleshooting
 
 ### "The downloaded file is empty"
 
-This means YouTube is blocking the download. Check:
+This means YouTube is blocking the download. Try:
 
-1. **Docker PO token server is running:**
-   ```bash
-   docker ps | grep pot-server
-   docker start pot-server  # if not running
-   ```
+1. **Select your browser** for cookie authentication (most important!)
+2. **Close the browser** before fetching (Windows requirement)
+3. **Make sure you're logged into YouTube** in that browser
+4. **Update yt-dlp** via the button in the web UI footer
 
-2. **Node.js is installed:**
-   ```bash
-   node --version
-   ```
+### "Could not copy Chrome cookie database"
 
-3. **Try selecting your browser** for cookie authentication
+This is a Windows-specific issue. Chrome locks its database while running.
 
-4. **Update yt-dlp:**
-   ```bash
-   pip install --upgrade yt-dlp
-   ```
+**Solutions:**
+- Close Chrome completely (check Task Manager)
+- Use Firefox instead (doesn't have this issue)
+- Use Edge if you're logged into YouTube there
 
 ### "ffmpeg not found"
 
 Make sure ffmpeg is installed and in your PATH.
 
-### "403 Forbidden"
-
-- Ensure Docker PO token server is running
-- Try selecting your browser for cookie authentication
-- Make sure you're logged into YouTube
-
-### "Sign in to confirm you're not a bot"
+### "403 Forbidden" / "Sign in to confirm you're not a bot"
 
 Select your browser from the dropdown (must be logged into YouTube).
 
