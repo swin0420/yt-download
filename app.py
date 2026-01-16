@@ -135,6 +135,8 @@ def get_node_path():
     return None  # Let yt-dlp try to find it
 
 NODE_PATH = get_node_path()
+logger.info(f"Node.js path: {NODE_PATH or 'NOT FOUND - YouTube downloads may fail!'}")
+logger.info(f"FFmpeg location: {FFMPEG_LOCATION or 'NOT FOUND'}")
 
 # Track download progress (with timestamps for cleanup)
 download_progress = {}
@@ -241,11 +243,12 @@ def download_video(url, format_choice, download_id, browser='none'):
         ydl_opts = {
             'outtmpl': output_template,
             'progress_hooks': [lambda d: progress_hook(d, download_id)],
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,  # Show detailed output for debugging
+            'no_warnings': False,
+            'verbose': True,  # Enable verbose logging
             'ffmpeg_location': FFMPEG_LOCATION,
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             },
         }
 
@@ -308,6 +311,7 @@ def download_video(url, format_choice, download_id, browser='none'):
             }
 
     except Exception as e:
+        logger.error(f"Download failed for {url}: {e}", exc_info=True)
         download_progress[download_id] = {
             'status': 'error',
             'error': str(e),
