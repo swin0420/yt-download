@@ -12,7 +12,6 @@ from functools import wraps
 from collections import defaultdict
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory, abort, Response
-from werkzeug.utils import secure_filename
 
 try:
     import yt_dlp
@@ -386,23 +385,21 @@ def progress(download_id):
     return jsonify({"error": "Download not found"}), 404
 
 
-@app.route("/file/<filename>")
+@app.route("/file/<path:filename>")
 @requires_auth
 def serve_file(filename):
     """Serve downloaded file"""
-    # Security: sanitize filename to prevent path traversal attacks
-    safe_name = secure_filename(filename)
-    if not safe_name:
-        logger.warning(f"Invalid filename requested: {filename}")
+    # Security: block path traversal and directory access attempts
+    if '..' in filename or '/' in filename or '\\' in filename:
+        logger.warning(f"Invalid filename rejected: {filename}")
         abort(400)
 
-    # Additional check: filename should match after sanitization
-    # This catches encoded traversal attempts like %2e%2e
-    if safe_name != filename:
-        logger.warning(f"Filename sanitization changed value: {filename} -> {safe_name}")
-        abort(400)
+    # Verify file exists in download folder
+    file_path = os.path.join(DOWNLOAD_FOLDER, filename)
+    if not os.path.isfile(file_path):
+        abort(404)
 
-    return send_from_directory(DOWNLOAD_FOLDER, safe_name, as_attachment=True)
+    return send_from_directory(DOWNLOAD_FOLDER, filename, as_attachment=True)
 
 
 @app.route("/downloads")
