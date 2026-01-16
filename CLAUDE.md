@@ -33,9 +33,9 @@ source venv/bin/activate
 pip install flask waitress yt-dlp
 ```
 
-### Auto-Start Service (Cross-Platform)
+### Auto-Start Service
 
-Use `setup.sh` to install as a background service:
+**macOS/Linux:** Use `setup.sh` to install as a background service:
 
 ```bash
 ./setup.sh           # Install and start service
@@ -46,10 +46,10 @@ Use `setup.sh` to install as a background service:
 ./setup.sh uninstall # Remove auto-start
 ```
 
-**Platform-specific details:**
 - **macOS**: Uses launchd (`~/Library/LaunchAgents/com.user.ytdownloader.plist`)
 - **Linux**: Uses systemd user service (`~/.config/systemd/user/ytdownloader.service`)
-- **Windows**: Creates startup batch/VBS files
+
+**Windows:** Use Task Scheduler or NSSM (Non-Sucking Service Manager)
 
 **Manual launchd control (macOS):**
 ```bash
@@ -122,16 +122,8 @@ Frontend (templates/ + static/)
 YouTube is blocking the download. Try:
 
 1. **Select your browser** for cookie authentication
-2. **Close the browser** before fetching (Windows requirement - browser locks cookie database)
-3. **Make sure you're logged into YouTube** in that browser
-4. **Update yt-dlp** via the button in the web UI footer
-
-### "Could not copy Chrome cookie database" (Windows)
-
-Chrome locks its database while running. Solutions:
-- Close Chrome completely (check Task Manager)
-- Use Firefox instead (doesn't have this locking issue)
-- Use Edge if you're logged into YouTube there
+2. **Make sure you're logged into YouTube** in that browser
+3. **Update yt-dlp** via the button in the web UI footer
 
 ### Low quality downloads (360p instead of 720p+)
 

@@ -28,7 +28,7 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/Cannibal420/yt-download.git
+git clone https://github.com/swin0420/yt-download.git
 cd yt-download
 ```
 
@@ -65,42 +65,15 @@ pip install -r requirements.txt
 
 ### 5. Run the app
 
-**Option A: Quick start (manual)**
 ```bash
 python app.py
 ```
 
-**Option B: Auto-start service (recommended)**
-
-Run the setup script to install as a background service that starts automatically:
-
-```bash
-./setup.sh
-```
-
-This will:
-- Install Python dependencies
-- Configure auto-start on boot
-- Start the server immediately
-
-**Service commands:**
-```bash
-./setup.sh start     # Start the service
-./setup.sh stop      # Stop the service
-./setup.sh restart   # Restart the service
-./setup.sh status    # Check if running
-./setup.sh uninstall # Remove auto-start
-```
-
-### 6. Open in browser
-
-```
-http://localhost:5051
-```
+Open http://localhost:5051 in your browser.
 
 Default login: `admin` / `changeme`
 
-### 7. Access from your phone (optional)
+### 6. Access from your phone (optional)
 
 When the server starts, it displays a network URL:
 
@@ -114,6 +87,40 @@ When the server starts, it displays a network URL:
 ```
 
 Make sure your phone is on the same Wi-Fi network. You'll be prompted to log in.
+
+## Auto-Start on Boot
+
+### macOS / Linux
+
+Use the setup script:
+
+```bash
+./setup.sh           # Install and start service
+./setup.sh stop      # Stop the service
+./setup.sh start     # Start the service
+./setup.sh status    # Check status
+./setup.sh uninstall # Remove auto-start
+```
+
+### Windows
+
+Use **Task Scheduler** or **NSSM** (Non-Sucking Service Manager):
+
+**Option A: Task Scheduler**
+1. Open Task Scheduler
+2. Create Basic Task → Name it "YouTube Downloader"
+3. Trigger: "When the computer starts"
+4. Action: Start a program
+   - Program: `C:\path\to\yt-download\venv\Scripts\python.exe`
+   - Arguments: `app.py`
+   - Start in: `C:\path\to\yt-download`
+
+**Option B: NSSM**
+```cmd
+nssm install ytdownloader "C:\path\to\venv\Scripts\python.exe" "C:\path\to\app.py"
+nssm set ytdownloader AppDirectory "C:\path\to\yt-download"
+nssm start ytdownloader
+```
 
 ## Authentication
 
@@ -153,12 +160,6 @@ To prevent abuse, downloads are rate limited:
 5. Wait for download
 6. Click "Save File"
 
-## Browser Cookies
-
-For YouTube videos (and age-restricted/private content), **select your browser from the dropdown**. Make sure you're logged into YouTube on that browser.
-
-**Windows users:** Close the browser completely before using cookie auth (the browser locks its database while running).
-
 ## Troubleshooting
 
 ### "The downloaded file is empty"
@@ -166,18 +167,8 @@ For YouTube videos (and age-restricted/private content), **select your browser f
 This means YouTube is blocking the download. Try:
 
 1. **Select your browser** for cookie authentication (most important!)
-2. **Close the browser** before fetching (Windows requirement)
-3. **Make sure you're logged into YouTube** in that browser
-4. **Update yt-dlp** via the button in the web UI footer
-
-### "Could not copy Chrome cookie database"
-
-This is a Windows-specific issue. Chrome locks its database while running.
-
-**Solutions:**
-- Close Chrome completely (check Task Manager)
-- Use Firefox instead (doesn't have this issue)
-- Use Edge if you're logged into YouTube there
+2. **Make sure you're logged into YouTube** in that browser
+3. **Update yt-dlp** via the button in the web UI footer
 
 ### "ffmpeg not found"
 
