@@ -69,6 +69,8 @@ def get_video_info(url, browser='none'):
     # YouTube-specific settings
     if 'youtube.com' in url or 'youtu.be' in url:
         ydl_opts['extractor_args'] = {'youtube': {'player_client': ['tv', 'web_safari']}}
+        # Enable Node.js runtime for signature solving
+        ydl_opts['js_runtimes'] = {'node': {'path': '/opt/homebrew/bin/node'}}
 
     # Add browser cookies if not 'none'
     if browser and browser != 'none':
@@ -153,35 +155,37 @@ def download_video(url, format_choice, download_id, browser='none'):
         # YouTube-specific settings
         if 'youtube.com' in url or 'youtu.be' in url:
             ydl_opts['extractor_args'] = {'youtube': {'player_client': ['tv', 'web_safari']}}
+            # Enable Node.js runtime for signature solving
+            ydl_opts['js_runtimes'] = {'node': {'path': '/opt/homebrew/bin/node'}}
 
         # Add browser cookies if not 'none'
         if browser and browser != 'none':
             ydl_opts['cookiesfrombrowser'] = (browser,)
 
-        # Configure format based on choice - prefer pre-combined formats to avoid 403
+        # Configure format based on choice
         if format_choice == 'best':
-            ydl_opts['format'] = 'best[ext=mp4]/best'
+            ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
         elif format_choice == 'audio':
-            ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best[ext=mp4]/best'
+            ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
         elif format_choice == 'flac':
-            ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best[ext=mp4]/best'
+            ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
             ydl_opts['postprocessors'] = [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'flac',
             }]
         elif format_choice == '1080p':
-            ydl_opts['format'] = 'best[height<=1080][ext=mp4]/best[height<=1080]/best'
+            ydl_opts['format'] = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best[height<=1080]/best'
         elif format_choice == '720p':
-            ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[height<=720]/best'
+            ydl_opts['format'] = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=720]/best'
         elif format_choice == '480p':
-            ydl_opts['format'] = 'best[height<=480][ext=mp4]/best[height<=480]/best'
+            ydl_opts['format'] = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best[height<=480]/best'
         elif format_choice == '360p':
-            ydl_opts['format'] = 'best[height<=360][ext=mp4]/best[height<=360]/best'
+            ydl_opts['format'] = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best[height<=360]/best'
         else:
             ydl_opts['format'] = format_choice
 

@@ -2,12 +2,9 @@
 
 A self-hosted web app for downloading YouTube videos using yt-dlp.
 
-![Dark Theme](screenshot-dark.png)
-![Light Theme](screenshot-light.png)
-
 ## Features
 
-- Download videos in multiple qualities (Best, 1080p, 720p, 480p, 360p)
+- Download videos in multiple qualities (Best/4K, 1080p, 720p, 480p, 360p)
 - Extract audio as MP3 or FLAC (lossless)
 - Supports YouTube, Twitter, TikTok, Instagram, and more
 - Progress tracking with speed and ETA
@@ -16,6 +13,13 @@ A self-hosted web app for downloading YouTube videos using yt-dlp.
 - Shared download history across all devices on your network
 - One-click yt-dlp updates from the web UI
 - Works on macOS, Linux, and Windows
+
+## System Requirements
+
+- **Python 3.10+** (3.12 recommended)
+- **ffmpeg** (for video/audio processing)
+- **Node.js** (for YouTube signature solving)
+- **Docker** (for YouTube PO token server)
 
 ## Quick Start
 
@@ -26,52 +30,54 @@ git clone https://github.com/Cannibal420/yt-download.git
 cd yt-download
 ```
 
-### 2. Set up virtual environment (macOS)
-
-Homebrew Python requires a virtual environment:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Python dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Install ffmpeg
+### 2. Install system dependencies
 
 **macOS (Homebrew):**
 ```bash
-brew install ffmpeg
+brew install python@3.12 node ffmpeg
 ```
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt update && sudo apt install ffmpeg
+sudo apt update && sudo apt install python3 python3-venv nodejs ffmpeg
 ```
 
-**Windows:**
-```bash
-winget install Gyan.FFmpeg
-```
-
-### 5. Run the app
+### 3. Set up virtual environment
 
 ```bash
-python app.py       # Linux/Windows
-python3 app.py      # macOS
+python3 -m venv venv
+source venv/bin/activate  # Linux/macOS
+# or: venv\Scripts\activate  # Windows
 ```
 
-### 6. Open in browser
+### 4. Install Python dependencies
+
+```bash
+pip install -r requirements.txt
+pip install yt-dlp-ejs bgutil-ytdlp-pot-provider yt-dlp-get-pot
+```
+
+### 5. Start Docker PO Token Server (Required for YouTube)
+
+YouTube requires Proof of Origin tokens. Start the server:
+
+```bash
+docker run -d --name pot-server -p 4416:4416 --restart unless-stopped brainicism/bgutil-ytdlp-pot-provider
+```
+
+### 6. Run the app
+
+```bash
+python app.py
+```
+
+### 7. Open in browser
 
 ```
 http://localhost:5051
 ```
 
-### 7. Access from your phone (optional)
+### 8. Access from your phone (optional)
 
 When the server starts, it displays a network URL:
 
@@ -80,10 +86,7 @@ When the server starts, it displays a network URL:
 [*] Network: http://192.168.x.x:5051  <- Use this on your phone
 ```
 
-To access from your phone:
-1. Make sure your phone is on the same Wi-Fi network as your computer
-2. Open the **Network** URL shown in the terminal on your phone's browser
-3. Download videos directly to your phone
+Make sure your phone is on the same Wi-Fi network.
 
 ## Usage
 
@@ -100,25 +103,54 @@ For age-restricted or private videos, select your browser from the dropdown. Mak
 
 ## Troubleshooting
 
-**"ffmpeg not found"**
-- Make sure ffmpeg is installed and in your PATH
+### "The downloaded file is empty"
 
-**"403 Forbidden"**
+This means YouTube is blocking the download. Check:
+
+1. **Docker PO token server is running:**
+   ```bash
+   docker ps | grep pot-server
+   docker start pot-server  # if not running
+   ```
+
+2. **Node.js is installed:**
+   ```bash
+   node --version
+   ```
+
+3. **Try selecting your browser** for cookie authentication
+
+4. **Update yt-dlp:**
+   ```bash
+   pip install --upgrade yt-dlp
+   ```
+
+### "ffmpeg not found"
+
+Make sure ffmpeg is installed and in your PATH.
+
+### "403 Forbidden"
+
+- Ensure Docker PO token server is running
 - Try selecting your browser for cookie authentication
 - Make sure you're logged into YouTube
 
-**"Sign in to confirm you're not a bot"**
-- Select your browser from the dropdown (must be logged into YouTube)
+### "Sign in to confirm you're not a bot"
 
-**Videos not downloading or extraction errors**
-- Click the "Update yt-dlp" button in the footer to get the latest version
-- YouTube frequently changes their API, and yt-dlp updates fix these issues
+Select your browser from the dropdown (must be logged into YouTube).
+
+### Low quality downloads (360p instead of 720p+)
+
+- Make sure Docker is running
+- Check that Node.js is installed
 
 ## Tech Stack
 
 - Python + Flask
 - yt-dlp
 - ffmpeg
+- Node.js (for YouTube signature solving)
+- Docker (for PO token server)
 - Vanilla JS/CSS
 
 ## Disclaimer
