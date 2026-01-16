@@ -2,6 +2,9 @@
 
 A self-hosted web app for downloading YouTube videos using yt-dlp.
 
+![Light Theme](screenshot-light.png)
+![Dark Theme](screenshot-dark.png)
+
 ## Features
 
 - Download videos in multiple qualities (Best/4K, 1080p, 720p, 480p, 360p)
@@ -34,20 +37,27 @@ cd yt-download
 
 **macOS (Homebrew):**
 ```bash
-brew install python@3.12 node ffmpeg
+brew install python@3.12 node ffmpeg docker
 ```
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt update && sudo apt install python3 python3-venv nodejs ffmpeg
+sudo apt update && sudo apt install python3 python3-venv nodejs ffmpeg docker.io
 ```
 
-### 3. Set up virtual environment
+**Windows:**
+```powershell
+winget install Python.Python.3.12
+winget install OpenJS.NodeJS
+winget install Gyan.FFmpeg
+winget install Docker.DockerDesktop
+```
+
+### 3. Set up virtual environment (macOS/Linux only)
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # Linux/macOS
-# or: venv\Scripts\activate  # Windows
+source venv/bin/activate
 ```
 
 ### 4. Install Python dependencies
@@ -91,7 +101,7 @@ Make sure your phone is on the same Wi-Fi network.
 ## Usage
 
 1. Paste a YouTube URL
-2. Select your browser (for cookie auth) or use "No Cookies" for public videos
+2. Select your browser (for cookie auth)
 3. Click "Fetch Info"
 4. Choose quality/format
 5. Wait for download
@@ -139,19 +149,10 @@ Make sure ffmpeg is installed and in your PATH.
 
 Select your browser from the dropdown (must be logged into YouTube).
 
-### Low quality downloads (360p instead of 720p+)
-
-- Make sure Docker is running
-- Check that Node.js is installed
-
 ## Tech Stack
 
-- Python + Flask
-- yt-dlp
-- ffmpeg
-- Node.js (for YouTube signature solving)
-- Docker (for PO token server)
-- Vanilla JS/CSS
+- Python / Flask
+- Vanilla JS / CSS
 
 ## Disclaimer
 
