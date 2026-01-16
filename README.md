@@ -78,8 +78,31 @@ docker run -d --name pot-server -p 4416:4416 --restart unless-stopped brainicism
 
 ### 6. Run the app
 
+**Option A: Quick start (manual)**
 ```bash
 python app.py
+```
+
+**Option B: Auto-start service (recommended)**
+
+Run the setup script to install as a background service that starts automatically:
+
+```bash
+./setup.sh
+```
+
+This will:
+- Install Python dependencies
+- Configure auto-start on boot
+- Start the server immediately
+
+**Service commands:**
+```bash
+./setup.sh start     # Start the service
+./setup.sh stop      # Stop the service
+./setup.sh restart   # Restart the service
+./setup.sh status    # Check if running
+./setup.sh uninstall # Remove auto-start
 ```
 
 ### 7. Open in browser

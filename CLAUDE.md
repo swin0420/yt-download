@@ -50,29 +50,31 @@ source venv/bin/activate
 pip install flask waitress yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider yt-dlp-get-pot
 ```
 
-### launchd Service (macOS)
+### Auto-Start Service (Cross-Platform)
 
-The app runs as a launchd service for auto-start:
-
-**Plist location:** `~/Library/LaunchAgents/com.nekonya.ytdownloader.plist`
+Use `setup.sh` to install as a background service:
 
 ```bash
-# Stop
-launchctl stop com.nekonya.ytdownloader
-
-# Start
-launchctl start com.nekonya.ytdownloader
-
-# Reload config after plist changes
-launchctl unload ~/Library/LaunchAgents/com.nekonya.ytdownloader.plist
-launchctl load ~/Library/LaunchAgents/com.nekonya.ytdownloader.plist
+./setup.sh           # Install and start service
+./setup.sh start     # Start the service
+./setup.sh stop      # Stop the service
+./setup.sh restart   # Restart the service
+./setup.sh status    # Check if running
+./setup.sh uninstall # Remove auto-start
 ```
 
-The plist is configured to:
-- Use Python from `./venv/bin/python`
-- Set PATH to include `/opt/homebrew/bin` (for Node.js access)
-- Set authentication env vars (`YT_AUTH_USER`, `YT_AUTH_PASS`, `YT_AUTH_ENABLED`)
-- Auto-restart if crashed (`KeepAlive: true`)
+**Platform-specific details:**
+- **macOS**: Uses launchd (`~/Library/LaunchAgents/com.user.ytdownloader.plist`)
+- **Linux**: Uses systemd user service (`~/.config/systemd/user/ytdownloader.service`)
+- **Windows**: Creates startup batch/VBS files
+
+**Manual launchd control (macOS):**
+```bash
+launchctl stop com.user.ytdownloader
+launchctl start com.user.ytdownloader
+```
+
+**Note:** The owner's instance uses a custom plist at `com.nekonya.ytdownloader` with auth env vars configured.
 
 ## Authentication & Rate Limiting
 
