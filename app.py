@@ -116,6 +116,26 @@ def get_ffmpeg_location():
 
 FFMPEG_LOCATION = get_ffmpeg_location()
 
+def get_node_path():
+    """Auto-detect Node.js location for cross-platform support"""
+    import shutil
+    # Check common locations
+    locations = [
+        shutil.which('node'),  # System PATH (works on all platforms)
+        '/opt/homebrew/bin/node',  # macOS Apple Silicon (Homebrew)
+        '/usr/local/bin/node',  # macOS Intel (Homebrew) / Linux
+        '/usr/bin/node',  # Linux
+        'C:\\Program Files\\nodejs\\node.exe',  # Windows default
+        os.path.expandvars('%PROGRAMFILES%\\nodejs\\node.exe'),  # Windows
+        os.path.expandvars('%LOCALAPPDATA%\\Programs\\nodejs\\node.exe'),  # Windows user install
+    ]
+    for loc in locations:
+        if loc and os.path.exists(loc):
+            return loc
+    return None  # Let yt-dlp try to find it
+
+NODE_PATH = get_node_path()
+
 # Track download progress (with timestamps for cleanup)
 download_progress = {}
 
@@ -146,7 +166,8 @@ def get_video_info(url, browser='none'):
     if 'youtube.com' in url or 'youtu.be' in url:
         ydl_opts['extractor_args'] = {'youtube': {'player_client': ['tv', 'web_safari']}}
         # Enable Node.js runtime for signature solving
-        ydl_opts['js_runtimes'] = {'node': {'path': '/opt/homebrew/bin/node'}}
+        if NODE_PATH:
+            ydl_opts['js_runtimes'] = {'node': {'path': NODE_PATH}}
 
     # Add browser cookies if not 'none'
     if browser and browser != 'none':
@@ -232,7 +253,8 @@ def download_video(url, format_choice, download_id, browser='none'):
         if 'youtube.com' in url or 'youtu.be' in url:
             ydl_opts['extractor_args'] = {'youtube': {'player_client': ['tv', 'web_safari']}}
             # Enable Node.js runtime for signature solving
-            ydl_opts['js_runtimes'] = {'node': {'path': '/opt/homebrew/bin/node'}}
+            if NODE_PATH:
+                ydl_opts['js_runtimes'] = {'node': {'path': NODE_PATH}}
 
         # Add browser cookies if not 'none'
         if browser and browser != 'none':
