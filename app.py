@@ -390,7 +390,8 @@ def progress(download_id):
 def serve_file(filename):
     """Serve downloaded file"""
     # Security: block path traversal and directory access attempts
-    if '..' in filename or '/' in filename or '\\' in filename:
+    # Only block '..' when it's a path component (followed by / or \), not in regular filenames
+    if '/' in filename or '\\' in filename:
         logger.warning(f"Invalid filename rejected: {filename}")
         abort(400)
 
